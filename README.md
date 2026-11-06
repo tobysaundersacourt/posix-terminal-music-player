@@ -1,6 +1,6 @@
-# Pulse — upgraded terminal music player
+# Pulse — POSIX terminal music player
 
-A C++17 upgrade of your original player, using FFmpeg for playback. Linux/POSIX terminals are supported; Windows needs WSL. No C++ libraries beyond the standard library and POSIX APIs are required.
+Uses FFmpeg for playback. Linux/POSIX terminals are supported; Windows needs WSL. No C++ libraries beyond the standard library and POSIX APIs are required.
 
 ## Build and run (Ubuntu)
 
@@ -13,23 +13,6 @@ g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic play.cpp -o play
 ```
 
 Run `./play` without a folder, then enter `mvdir /path/to/music`. Paths may contain spaces, with or without enclosing quotes. `~` and `~/...` are expanded. Initial playback starts automatically at 70% volume.
-
-## What's new
-
-- Themed terminal dashboard with an ASCII vinyl record, highlighted track title, color-coded playback status, progress bar, volume, speed, and upcoming tracks.
-- Six themes: midnight (default), ocean, forest, amber, light, and mono. Switch instantly without interrupting playback.
-- Separate COMMANDS section with blank space and a divider below now playing; each example has its own line and description. The header reads PULSE with no tagline.
-- True pause/resume, preserving playback position.
-- Absolute and relative seeking; volume and mute controls.
-- Decimal playback speed from 0.01× to 100×, preserving pitch: `speed 1.25`, `speed 0.875`, or `speed 1` to reset. The speed persists across tracks and folder changes.
-- Search tracks, jump by number or unique name match, and scan subfolders optionally.
-- MP3, FLAC, WAV, Ogg, Opus, M4A, AAC, AIFF, WMA, and MP4 discovery; actual decoding depends on your FFmpeg build. Extensions are case insensitive.
-- Explicit INFO confirmations for loop, repeat-once, direction, pause/resume, seek, volume, and mute commands; the most recent response stays visible until newer feedback arrives.
-- Command history with Up/Down, cursor editing with Left/Right, Ctrl+A/E for start/end, and Ctrl+U to clear the line. Ctrl+C or Ctrl+D exits cleanly.
-- Correctly shuffled queue without interrupting the current track; reverse order survives repeat-once/repeat-track mode changes.
-- Single event loop removes shared-state races. Only this player's child process is stopped. Filenames never pass through a shell.
-- Bad folders preserve the current queue. Failed tracks are skipped; a fully failing queue stops instead of spinning forever.
-- Piped commands work without terminal escape codes.
 
 ## Commands
 
