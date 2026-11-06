@@ -305,8 +305,13 @@ public:
             else if (tracks.empty()) note("Open a folder with mvdir PATH.");
             else if (cmd == "next" || cmd == "n") select(wrapped(static_cast<long long>(index) + 1));
             else if (cmd == "previous" || cmd == "prev" || cmd == "p") select(wrapped(static_cast<long long>(index) - 1));
-            else if (cmd == "pause" || cmd == "space") togglePause();
-            else if (cmd == "resume") { if (paused || ended) togglePause(); }
+            else if (cmd == "pause" || cmd == "space") {
+                togglePause(); note(paused ? "Playback paused. Type pause or resume to continue." : "Playback resumed.");
+            }
+            else if (cmd == "resume") {
+                if (paused || ended) { togglePause(); note("Playback resumed."); }
+                else note("Playback is already running.");
+            }
             else if (cmd == "random") {
                 if (tracks.size() > 1) select((index + std::uniform_int_distribution<size_t>(1, tracks.size() - 1)(rng)) % tracks.size());
                 else select(0);
@@ -337,6 +342,7 @@ public:
             }
             else if (cmd == "seek") {
                 double p = number(arg); if (arg.front() == '+' || arg.front() == '-') p += position(); restartAt(p);
+                note("Seek: " + timeText(offset) + " into the track.");
             }
             else if (cmd == "speed" || cmd == "rate") {
                 if (arg.empty()) note("Speed: " + decimalText(speed) + "x");
@@ -356,9 +362,13 @@ public:
                 else {
                     double v = number(arg); if (v < 0 || v > 100) throw std::runtime_error("Volume must be between 0 and 100.");
                     double p = position(); volume = static_cast<int>(v); restartAt(p);
+                    note("Volume: " + std::to_string(volume) + "%");
                 }
             }
-            else if (cmd == "mute") { double p = position(); volume = volume == 0 ? 70 : 0; restartAt(p); }
+            else if (cmd == "mute") {
+                double p = position(); volume = volume == 0 ? 70 : 0; restartAt(p);
+                note(volume == 0 ? "Muted. Type mute to restore volume." : "Unmuted. Volume: " + std::to_string(volume) + "%");
+            }
             else if (cmd == "shuffle" || cmd == "sort") {
                 fs::path current = tracks[index];
                 if (cmd == "shuffle") std::shuffle(tracks.begin(), tracks.end(), rng);
@@ -366,10 +376,24 @@ public:
                 index = static_cast<size_t>(std::find(tracks.begin(), tracks.end(), current) - tracks.begin());
                 note(cmd == "shuffle" ? "Queue shuffled; current track kept." : "Queue sorted.");
             }
-            else if (cmd == "forward") reverse = false;
-            else if (cmd == "reverse") reverse = !reverse;
-            else if (cmd == "once") { repeatOnce = !repeatOnce; repeatOne = false; }
-            else if (cmd == "loop") { repeatOne = !repeatOne; repeatOnce = false; }
+            else if (cmd == "forward") {
+                reverse = false; note("Direction: FORWARD. Automatic track changes go forward.");
+            }
+            else if (cmd == "reverse") {
+                reverse = !reverse;
+                note(reverse ? "Direction: REVERSE. Automatic track changes go backward."
+                             : "Direction: FORWARD. Automatic track changes go forward.");
+            }
+            else if (cmd == "once") {
+                repeatOnce = !repeatOnce; repeatOne = false;
+                note(repeatOnce ? "Repeat once ON: this track will play one extra time."
+                                : "Repeat once OFF: playlist playback resumes.");
+            }
+            else if (cmd == "loop") {
+                repeatOne = !repeatOne; repeatOnce = false;
+                note(repeatOne ? "Loop ON: repeating the current track until you turn loop off."
+                               : "Loop OFF: playlist playback resumes.");
+            }
             else if (cmd == "mode") note(std::string(reverse ? "Reverse" : "Forward") + (repeatOne ? " / repeat track" : repeatOnce ? " / repeat once" : " / repeat queue"));
             else if (cmd == "notify") { announce = !announce; note(announce ? "Track announcements on." : "Track announcements off."); }
             else if (cmd == "display") { double p = position(); display = !display; restartAt(p); note(display ? "Waveform window on." : "Waveform window off."); }
@@ -499,7 +523,7 @@ public:
                 bool error = m.rfind("Error:", 0) == 0 || m.rfind("Unknown command:", 0) == 0 ||
                     m.rfind("Could not play:", 0) == 0 || m.rfind("Playback stopped:", 0) == 0;
                 bool current = m.rfind("> ", 0) == 0 || m.rfind("Now playing:", 0) == 0;
-                rows.push_back({{"  " + std::string(error ? "ERROR" : "INFO") + "  ", error ? Error : Muted, true},
+                rows.push_back({{std::string(error ? "ERROR" : "INFO") + "  ", error ? Error : Muted, true},
                     {m, error ? Error : current ? Good : Text, current}});
             }
         }
